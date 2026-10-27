@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Storage System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f7;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px #0002;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2457a7;
+        }
+        
+        .upload-box {
+            text-align: center;
+            padding: 25px;
+            border: 2px dashed #2457a7;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        input,
+        button {
+            padding: 10px;
+            margin: 6px 0;
+        }
+        
+        button {
+            background: #2457a7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #173d78;
+        }
+        
+        #search {
+            width: 95%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        .file {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            background: #f4f7fb;
+            border-radius: 6px;
+            overflow-wrap: anywhere;
+        }
+        
+        .file-name {
+            flex: 1;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .delete {
+            background: #d93636;
+        }
+        
+        #message {
+            color: #2457a7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>☁ Document Storage System</h1>
+        <p style="text-align:center;">
+            Upload and manage your documents easily.
+        </p>
+
+        <div class="upload-box">
+            <h3>Select Your Documents</h3>
+
+            <input type="file" id="fileInput" multiple>
+            <br>
+            <button onclick="uploadFiles()">Upload Documents</button>
+            <p id="message"></p>
+        </div>
+
+        <h2>My Documents</h2>
+
+        <input type="text" id="search" placeholder="Search documents by name..." oninput="displayFiles()">
+
+        <div id="fileList"></div>
+    </div>
+
+    <script>
+        let documents = [];
+
+        function uploadFiles() {
+            const input = document.getElementById("fileInput");
+            const files = Array.from(input.files);
+
+            if (files.length === 0) {
+                alert("Please select at least one document.");
+                return;
+            }
+
+            files.forEach(file => {
+                documents.push({
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    file: file,
+                    size: (file.size / 1024).toFixed(2)
+                });
+            });
+
+            document.getElementById("message").textContent =
+                files.length + " document(s) added successfully!";
+
+            input.value = "";
+            displayFiles();
+        }
+
+        function displayFiles() {
+            const list = document.getElementById("fileList");
+            const search = document.getElementById("search")
+                .value.toLowerCase();
+
+            list.replaceChildren();
+
+            const filtered = documents.filter(doc =>
+                doc.name.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                list.textContent = "No documents found.";
+                return;
+            }
+
+            filtered.forEach(doc => {
+                const row = document.createElement("div");
+                row.className = "file";
+
+                const name = document.createElement("span");
+                name.className = "file-name";
+                name.textContent = "📄 " + doc.name +
+                    " (" + doc.size + " KB)";
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                const download = document.createElement("button");
+                download.textContent = "Download";
+                download.onclick = () => {
+                    const url = URL.createObjectURL(doc.file);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = doc.name;
+                    link.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                };
+
+                const view = document.createElement("button");
+                view.textContent = "View";
+                view.onclick = () => {
+                    const url = URL.createObjectURL(doc.file);
+                    window.open(url, "_blank");
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                };
+
+                const remove = document.createElement("button");
+                remove.textContent = "Delete";
+                remove.className = "delete";
+                remove.onclick = () => {
+                    documents = documents.filter(
+                        item => item.id !== doc.id
+                    );
+                    displayFiles();
+                };
+
+                actions.append(download, view, remove);
+                row.append(name, actions);
+                list.appendChild(row);
+            });
+        }
+    </script>
+
+</body>
+
+</html>
